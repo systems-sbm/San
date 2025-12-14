@@ -508,6 +508,44 @@
         
         document.getElementById('invoiceModal').style.display='flex'; 
     }
+    <script>
+let db;
+
+function abrirDB() {
+  const request = indexedDB.open("VentasDB", 1);
+
+  request.onupgradeneeded = e => {
+    db = e.target.result;
+    db.createObjectStore("ventas", { keyPath: "id", autoIncrement: true });
+  };
+
+  request.onsuccess = e => {
+    db = e.target.result;
+  };
+}
+
+abrirDB();
+</script>
+<script>
+function guardarVentaOffline(venta) {
+  const tx = db.transaction("ventas", "readwrite");
+  const store = tx.objectStore("ventas");
+  store.add({
+    ...venta,
+    enviada: false,
+    fecha: new Date().toISOString()
+  });
+}
+</script>
+<script>
+function hayInternet() {
+  return navigator.onLine;
+}
+
+window.addEventListener("online", sincronizarVentas);
+</script>
+
 </script>
 </body>
+
 </html>
