@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>San</title>
+    <style>
+        :root {
+            --primary: #2563eb; --secondary: #475569; --success: #16a34a;
+            --danger: #dc2626; --warning: #f59e0b; --bg: #f8fafc; --card: #ffffff;
+            --purple: #7c3aed; --teal: #0d9488;
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: #0f172a; margin: 0; padding-bottom: 80px; }
+        
+        /* HEADER & NAV */
+        .cloud-status { margin: 10px 15px; padding: 8px; border-radius: 6px; font-size: 0.85rem; text-align: center; }
+        .status-ok { background: #dcfce7; color: #166534; }
+        .status-warning { background: #fef3c7; color: #92400e; }
+        .status-error { background: #fee2e2; color: #991b1b; }
+
+        .nav-bar { background: #1e293b; padding: 10px 0; position: sticky; top: 0; z-index: 50; display: flex; gap: 10px; overflow-x: auto; padding-left: 15px; padding-right: 15px; scrollbar-width: none; }
+        .nav-btn { background: rgba(255,255,255,0.1); color: #cbd5e1; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; white-space: nowrap; font-size: 0.9rem; flex-shrink: 0; }
+        .nav-btn.active { background: var(--primary); color: white; }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 15px; }
+        .section { display: none; } .section.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* CARDS & INPUTS */
+        .card { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        .input-row { display: grid; gap: 12px; margin-bottom: 15px; grid-template-columns: 1fr; }
+        @media (min-width: 600px) { .input-row { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); } }
+        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; font-size: 16px; }
+
+        /* BOTONES */
+        button { cursor: pointer; border: none; font-weight: 600; border-radius: 8px; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; padding: 14px; width: 100%; font-size: 1rem; }
+        .btn-sm { padding: 8px 12px; font-size: 0.85rem; color: white; margin-right: 5px; margin-bottom: 5px; display: inline-block;}
+        .bg-green { background: var(--success); } .bg-blue { background: var(--primary); }
+        .bg-red { background: var(--danger); } .bg-yellow { background: var(--warning); color: black; } 
+        .bg-dark { background: #334155; color: white; } .bg-purple { background: var(--purple); color: white; }
+
+        /* TABLAS & GRID */
+        .table-responsive { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        th { background: #f8fafc; color: #475569; font-weight: 700; }
+        
+        .days-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; margin-top: 15px; padding-bottom: 20px; }
+        .day-box { background: #f1f5f9; border: 2px solid #cbd5e1; padding: 15px 0; text-align: center; border-radius: 8px; font-weight: bold; color: #64748b; font-size: 0.9rem; }
+        .day-box.paid { background: var(--success); border-color: var(--success); color: white; }
+
+        /* MONEY PANELS */
+        .money-panel { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .money-card { flex: 1; padding: 15px; border-radius: 8px; color: white; min-width: 140px; }
+        .money-total { background: #0f172a; }
+        .money-profit { background: var(--teal); }
+
+        /* MODALES */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: flex-end; }
+        .modal-content { background: white; padding: 20px; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 20px 20px 0 0; animation: slideUp 0.3s ease-out; }
+        @media (min-width: 768px) { .modal-overlay { align-items: center; } .modal-content { width: 90%; max-width: 800px; border-radius: 12px; } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .close-modal { position: absolute; top: 15px; right: 15px; background: #f1f5f9; width: 30px; height: 30px; border-radius: 50%; border: none; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+
+        /* CARTA FORMAL */
+        .letter-box { width: 100%; padding: 20px; background: white; font-family: 'Times New Roman', serif; color: black; }
+        .letter-header { display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+        .letter-title { font-size: 1.5rem; font-weight: bold; text-transform: uppercase; }
+        .letter-body table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+        .letter-body th, .letter-body td { border-bottom: 1px solid #ddd; padding: 5px; text-align: left;}
+        
+        @media print {
+            body { background: white; margin: 0; padding: 0; }
+            body * { visibility: hidden; height: 0; overflow: hidden; } 
+            #invoiceModal { display: block !important; position: absolute; top: 0; left: 0; width: 100%; height: auto; background: white; z-index: 9999; visibility: visible; overflow: visible !important; }
+            #invoiceModal .modal-content { position: static; box-shadow: none; border: none; width: 100%; max-width: 100%; max-height: none !important; padding: 0; margin: 0; overflow: visible !important; visibility: visible; height: auto; }
+            #invoiceModal .letter-box, #invoiceModal .letter-box * { visibility: visible; width: 100%; height: auto; overflow: visible; }
+            .no-print, .close-modal { display: none !important; }
+        }
+        @page { size: auto; margin: 5mm; }
+    </style>
+</head>
+<body>
+
+<div id="cloudStatus" class="cloud-status status-warning">⏳ Iniciando...</div>
+
+<div class="nav-bar no-print">
+    <button class="nav-btn" onclick="showTab('clients')">👥 Clientes</button>
+    <button class="nav-btn active" onclick="showTab('san')">💰 San Activos</button>
+    <button class="nav-btn" onclick="showTab('archives')">🗄️ Archivados</button>
+    <button class="nav-btn" onclick="showTab('loans')">💸 Préstamos</button>
+    <button class="nav-btn" onclick="showTab('ledger')">📊 Caja</button>
+</div>
+
+<div class="container no-print">
+
+    <div id="clients" class="section">
+        <div class="card">
+            <h2>Gestión de Clientes</h2>
+            <div class="input-row">
+                <input type="text" id="clientNameInput" placeholder="Nombre completo">
+                <input type="number" id="clientPhoneInput" placeholder="Teléfono">
+                <button class="btn-primary" onclick="addClient()">Guardar Cliente</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Acciones</th></tr></thead><tbody id="clientsTableBody"></tbody></table>
+        </div>
+    </div>
+
+    <div id="san" class="section active">
+        <div class="card">
+            <h2>Nuevo San</h2>
+            <div class="input-row">
+                <div><label>Cliente</label><select id="sanClientSelect"><option>Cargando...</option></select></div>
+                <div><label>Frecuencia</label><select id="sanFreq"><option value="Diario">Diario</option><option value="Semanal">Semanal</option><option value="Quincenal">Quincenal</option><option value="Mensual">Mensual</option></select></div>
+                <div><label>Cuota ($)</label><input type="number" id="sanQuota" value="200" step="0.01"></div>
+                <div><label>Duración</label><input type="number" id="sanTotal" value="28"></div>
+                <div><label>Total a Devolver</label><input type="number" id="sanReturn" value="25" step="0.01"></div>
+            </div>
+            <button class="btn-primary" onclick="addSanParticipant()">+ Crear Contrato</button>
+        </div>
+        <div class="table-responsive">
+            <table><thead><tr><th>Cliente / Plan</th><th>Progreso</th><th>Balance (Ahorro - Deuda)</th><th>Acciones</th></tr></thead><tbody id="sanTableBody"></tbody></table>
+        </div>
+    </div>
+
+    <div id="archives" class="section">
+        <div class="card"><h2>🗄️ Archivados</h2></div>
+        <div class="table-responsive">
+            <table><thead><tr><th>Cliente</th><th>Plan Finalizado</th><th>Total Entregado</th><th>Acciones</th></tr></thead><tbody id="archivesTableBody"></tbody></table>
+        </div>
+    </div>
+
+    <div id="loans" class="section">
+        <div class="card" style="border-left: 4px solid var(--warning);">
+            <h2>Nuevo Préstamo</h2>
+            <div class="input-row">
+                <div><label>Cliente</label><select id="loanClientSelect"><option>Cargando...</option></select></div>
+                <div><label>Monto</label><input type="number" id="loanAmount" step="0.01"></div>
+                <div><label>Motivo</label><input type="text" id="loanDesc"></div>
+            </div>
+            <button class="btn-primary" style="background:var(--warning); color:black;" onclick="addLoan()">Dar Préstamo</button>
+        </div>
+        <div class="table-responsive">
+            <table><thead><tr><th>Deudor</th><th>Monto</th><th>Restante</th><th>Acciones</th></tr></thead><tbody id="loansTableBody"></tbody></table>
+        </div>
+    </div>
+
+    <div id="ledger" class="section">
+        <div class="card">
+            <h2>Caja General</h2>
+            
+            <div class="money-panel">
+                <div class="money-card money-total">
+                    <small>DINERO TOTAL EN CAJA</small>
+                    <h2 id="totalCash" style="margin:5px 0 0 0;">RD$ 0</h2>
+                </div>
+                <div class="money-card money-profit">
+                    <small>GANANCIA MÍA (DISPONIBLE)</small>
+                    <h2 id="myProfit" style="margin:5px 0 0 0;">RD$ 0</h2>
+                </div>
+            </div>
+
+            <button class="btn-sm bg-purple" style="width:100%; margin-bottom:15px; padding:12px;" onclick="withdrawProfit()">💸 Retirar Ganancia</button>
+
+            <div class="table-responsive">
+                <table><thead><tr><th>Fecha</th><th>Cliente</th><th>Detalle</th><th>Monto</th></tr></thead><tbody id="ledgerTableBody"></tbody></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="paymentModal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeModal('paymentModal')">×</button>
+        <h2 id="payTitle" style="margin-bottom:5px;">Cartón</h2>
+        
+        <div style="margin-bottom:15px; background:#f1f5f9; padding:10px; border-radius:8px;">
+            <label style="font-size:0.9rem; font-weight:bold; color:#475569;">📅 Fecha Manual (Opcional):</label>
+            <input type="datetime-local" id="manualDateInput" style="margin-top:5px;">
+            <small style="color:#666; display:block; margin-top:3px;">Si lo dejas vacío, usa la fecha de hoy.</small>
+        </div>
+
+        <div id="gridContainer" class="days-grid"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="historyModal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeModal('historyModal')">×</button>
+        <h2 id="histTitle">Historial</h2>
+        <div class="table-responsive">
+            <table><thead><tr><th>Fecha</th><th>Detalle</th><th>Monto</th></tr></thead><tbody id="individualHistBody"></tbody></table>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="invoiceModal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeModal('invoiceModal')">×</button>
+        <div class="letter-box">
+            <div class="letter-header">
+                <div><div class="letter-title">SISTEMA DE SAN</div><div>Liquidación Final</div></div>
+                <div style="text-align:right;"><small>Fecha:</small> <span id="invDate"></span><br><small>Folio:</small> #<span id="invId"></span></div>
+            </div>
+            <div style="margin-bottom: 20px; font-size:0.9rem;">
+                <p><strong>CLIENTE:</strong> <span id="invName">---</span></p>
+                <p><strong>PLAN:</strong> <span id="invFreq"></span></p>
+                <p><strong>DETALLE:</strong> RD$ <span id="invQuota"></span> x <span id="invDays"></span> pagos.</p>
+            </div>
+            <div class="letter-body">
+                <h3>DETALLE DE CUENTA</h3>
+                <table>
+                    <thead><tr><th>Concepto</th><th style="text-align:right;">Monto</th></tr></thead>
+                    <tbody id="invBody"></tbody>
+                    
+                    <tfoot id="invFooter">
+                        </tfoot>
+                </table>
+            </div>
+        </div>
+        <center><button class="btn-primary no-print" onclick="window.print()" style="margin-top:20px;">🖨️ Imprimir</button></center>
+    </div>
+</div>
+
+<script>
+    const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxE7Mes071XXL8RCjLhLBi1cA3I4wrZ5KAgosJ78QTzDMlFx8EIJqIx-b_Bu_RdwCcb/exec";
+    let dataStore = { clients: [], san: [], loans: [], ledger: [], archives: [] };
+
+    window.onload = function() { loadFromCloud(); };
+
+    // --- NUBE ---
+    function updateStatus(msg, type) { const el = document.getElementById('cloudStatus'); el.innerText = msg; el.className = 'cloud-status ' + (type === 'ok' ? 'status-ok' : (type === 'error' ? 'status-error' : 'status-warning')); }
+    function saveToCloud() { updateStatus("☁️ Guardando...", "warning"); fetch(GOOGLE_URL, { method: 'POST', body: JSON.stringify(dataStore) }).then(r=>r.text()).then(()=>updateStatus("✅ Guardado", "ok")).catch(()=>updateStatus("❌ Error", "error")); }
+    function loadFromCloud() { updateStatus("⏳ Descargando...", "warning"); fetch(GOOGLE_URL).then(r=>r.json()).then(d=>{ if(d){ dataStore = d; if(!dataStore.clients)dataStore.clients=[]; if(!dataStore.san)dataStore.san=[]; if(!dataStore.loans)dataStore.loans=[]; if(!dataStore.ledger)dataStore.ledger=[]; if(!dataStore.archives)dataStore.archives=[]; renderAll(); updateStatus("✅ Conectado", "ok"); } }).catch(()=>updateStatus("⚠️ Error conexión", "warning")); }
+    function showTab(id) { document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); const map={'clients':0,'san':1,'archives':2,'loans':3,'ledger':4}; document.querySelectorAll('.nav-btn')[map[id]].classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    // --- LOGICA ---
+    function addClient() {
+        try {
+            const name = document.getElementById('clientNameInput').value;
+            const phone = document.getElementById('clientPhoneInput').value;
+            if(!name) return alert("Nombre obligatorio");
+            if(!dataStore.clients) dataStore.clients = [];
+            dataStore.clients.push({ id: Date.now(), name, phone });
+            document.getElementById('clientNameInput').value = ""; document.getElementById('clientPhoneInput').value = "";
+            saveToCloud(); renderClients();
+        } catch(e) { alert("Error al agregar cliente: " + e); }
+    }
+    function deleteClient(id) { if(confirm("¿Eliminar?")) { dataStore.clients = dataStore.clients.filter(c => c.id !== id); saveToCloud(); renderClients(); } }
+
+    function addSanParticipant() {
+        try {
+            const sel = document.getElementById('sanClientSelect'); const cid = parseInt(sel.value);
+            if(!cid) return alert("Selecciona cliente.");
+            const quota = parseFloat(document.getElementById('sanQuota').value);
+            const total = parseInt(document.getElementById('sanTotal').value);
+            const ret = parseFloat(document.getElementById('sanReturn').value);
+            if(!quota || !total) return alert("Faltan datos.");
+            if(!dataStore.san) dataStore.san = [];
+            dataStore.san.push({
+                id: Date.now(), clientId: cid, clientName: sel.options[sel.selectedIndex].text,
+                frequency: document.getElementById('sanFreq').value,
+                quota: quota, total: total, ret: isNaN(ret) ? 0 : ret,
+                paidDays: [], delivered: false
+            });
+            saveToCloud(); renderSan(); showTab('san');
+        } catch(e) { alert("Error creando contrato: " + e); }
+    }
+
+    function addLoan() {
+        const sel = document.getElementById('loanClientSelect'); const cid = parseInt(sel.value); const amount = parseFloat(document.getElementById('loanAmount').value);
+        if(!cid || !amount) return; const name = sel.options[sel.selectedIndex].text; const desc = document.getElementById('loanDesc').value;
+        if(!dataStore.loans) dataStore.loans = [];
+        dataStore.loans.push({ id: Date.now(), clientId: cid, clientName: name, amount, desc, paid: 0 });
+        addToLedger(name, `Préstamo: ${desc}`, amount, false, cid); saveToCloud(); renderLoans();
+    }
+
+    function addToLedger(clientName, desc, amount, isIncome, clientId, customDateString = null) {
+        if(!dataStore.ledger) dataStore.ledger = [];
+        
+        let dateStr = "";
+        if (customDateString) {
+            const d = new Date(customDateString);
+            dateStr = d.toLocaleDateString('es-DO') + ' ' + d.toLocaleTimeString('es-DO', {hour: '2-digit', minute:'2-digit'});
+        } else {
+            const now = new Date();
+            dateStr = now.toLocaleDateString('es-DO') + ' ' + now.toLocaleTimeString('es-DO', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        dataStore.ledger.unshift({ date: dateStr, clientName, desc, amount, isIncome, clientId });
+        renderLedger();
+    }
+
+    function withdrawProfit() {
+        let currentCash = 0;
+        if(dataStore.ledger) dataStore.ledger.forEach(l => currentCash += l.isIncome ? l.amount : -l.amount);
+        const amount = parseFloat(prompt(`Dinero en caja: RD$ ${currentCash.toLocaleString()}\n\n¿Cuánto retirar de ganancia?`));
+        if (amount && amount > 0) {
+            if(confirm(`¿Confirmas retirar RD$ ${amount}?`)) {
+                addToLedger("Admin", "Retiro de Ganancias", amount, false, null);
+                saveToCloud();
+            }
+        }
+    }
+
+    function deliverSan(id) {
+        const p = dataStore.san.find(x => x.id === id);
+        
+        // CÁLCULOS
+        const grossTotal = p.total * p.quota; 
+        const netSavings = p.ret * p.quota;   
+        const adminProfit = grossTotal - netSavings; 
+
+        // Deudas
+        let debt = 0;
+        let clientLoans = [];
+        if(dataStore.loans) {
+            clientLoans = dataStore.loans.filter(l => l.clientId === p.clientId && l.paid < l.amount);
+            clientLoans.forEach(l => debt += (l.amount - l.paid));
+        }
+
+        const finalPayout = netSavings - debt;
+
+        if(finalPayout < 0) return alert(`La deuda ($${debt}) es mayor que el ahorro disponible ($${netSavings}).`);
+        
+        const msg = `RESUMEN LIQUIDACIÓN:\n\n` +
+                    `Total Ahorrado (Bruto): $${grossTotal}\n` +
+                    `(-) Ganancia Admin: $${adminProfit}\n` +
+                    `--------------------\n` +
+                    `Subtotal Cliente: $${netSavings}\n` +
+                    `(-) Deuda Prestamos: $${debt}\n` +
+                    `--------------------\n` +
+                    `= A ENTREGAR: $${finalPayout}\n\n` +
+                    `¿Confirmar entrega?`;
+
+        if(confirm(msg)) {
+            p.delivered = true;
+            clientLoans.forEach(l => l.paid = l.amount); // Saldar deudas
+            addToLedger(p.clientName, `Entrega San (Saldada deuda $${debt})`, finalPayout, false, p.clientId);
+            saveToCloud(); renderSan(); renderLoans(); generateInvoice(id);
+        }
+    }
+
+    // --- RENDERS ---
+    function renderAll() { renderClients(); renderSan(); renderArchives(); renderLoans(); renderLedger(); }
+
+    function renderLedger() {
+        const tb = document.getElementById('ledgerTableBody'); tb.innerHTML = "";
+        let totalCash = 0; let totalWithdrawn = 0;
+        if(dataStore.ledger) {
+            dataStore.ledger.forEach(l => {
+                if(l.isIncome) totalCash += l.amount; else totalCash -= l.amount;
+                if(!l.isIncome && l.desc === "Retiro de Ganancias") totalWithdrawn += l.amount;
+            });
+        }
+        let totalProfitGenerated = 0;
+        if(dataStore.san) dataStore.san.forEach(p => { let profitPerDay = (p.quota * (p.total - p.ret)) / p.total; totalProfitGenerated += (profitPerDay * p.paidDays.length); });
+        if(dataStore.archives) dataStore.archives.forEach(a => { totalProfitGenerated += (a.quota * (a.total - a.ret)); });
+        const profitAvailable = totalProfitGenerated - totalWithdrawn;
+        document.getElementById('totalCash').innerText = `RD$ ${totalCash.toLocaleString()}`;
+        document.getElementById('myProfit').innerText = `RD$ ${profitAvailable.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        if(dataStore.ledger) dataStore.ledger.slice(0, 30).forEach(l => tb.innerHTML += `<tr><td>${l.date}</td><td>${l.clientName}</td><td>${l.desc}</td><td style="color:${l.isIncome?'green':'red'}">${l.amount}</td></tr>`);
+    }
+
+    function renderClients(){ 
+        const t=document.getElementById('clientsTableBody'); t.innerHTML=""; let o="<option value=''>-- Seleccionar --</option>"; 
+        if(dataStore.clients) dataStore.clients.forEach(c=>{ t.innerHTML+=`<tr><td><strong>${c.name}</strong><br><small>${c.phone}</small></td><td><button class="btn-sm bg-red" onclick="deleteClient(${c.id})">X</button></td><td></td></tr>`; o+=`<option value="${c.id}">${c.name}</option>`; }); 
+        document.getElementById('sanClientSelect').innerHTML=o; document.getElementById('loanClientSelect').innerHTML=o; 
+    }
+    
+    function renderSan(){ 
+        const t=document.getElementById('sanTableBody'); t.innerHTML=""; 
+        if(dataStore.san) {
+            dataStore.san.forEach(p=>{ 
+                if(!p.paidDays)p.paidDays=[]; 
+                let f=p.frequency?p.frequency.slice(0,3):"Dia"; 
+                const saved = p.paidDays.length * p.quota;
+                let debt = 0;
+                if(dataStore.loans) dataStore.loans.filter(l => l.clientId === p.clientId).forEach(l => { debt += (l.amount - l.paid); });
+                const balance = saved - debt;
+                const balColor = balance < 0 ? 'red' : 'green';
+                let act=p.delivered?`<span style='color:green;font-weight:bold'>LISTO</span> <button class="btn-sm bg-dark" onclick="generateInvoice(${p.id})">📄</button> <button class="btn-sm bg-purple" onclick="archiveSan(${p.id})">📦</button>`:`<button class="btn-sm bg-green" onclick="openPayment(${p.id})">📅</button> ${p.paidDays.length>=p.total?`<button class="btn-sm bg-yellow" onclick="deliverSan(${p.id})">🎁</button>`:''} <button class="btn-sm bg-red" onclick="deleteSan(${p.id})">🗑</button>`; 
+                t.innerHTML+=`<tr><td><strong>${p.clientName}</strong><br><small>$${p.quota} (${f})</small></td><td>${p.paidDays.length}/${p.total} <progress value="${p.paidDays.length}" max="${p.total}" style="width:40px"></progress></td><td style="color:${balColor}; font-weight:bold;">$${balance.toLocaleString()}</td><td>${act} <button class="btn-sm bg-blue" onclick="openHistory(${p.clientId},'${p.clientName}')">📜</button></td></tr>`; 
+            }); 
+        }
+    }
+
+    function renderArchives(){ const t=document.getElementById('archivesTableBody'); t.innerHTML=""; if(dataStore.archives) dataStore.archives.forEach(a=>{ t.innerHTML+=`<tr><td><strong>${a.clientName}</strong></td><td>$${a.quota} x ${a.total}</td><td>RD$ ${(a.ret*a.quota).toLocaleString()}</td><td><button class="btn-sm bg-dark" onclick="generateInvoice(${a.id},true)">📄</button> <button class="btn-sm bg-green" onclick="renewSan(${a.id})">🔄</button></td></tr>`; }); }
+    function payLoan(id){ const l=dataStore.loans.find(x=>x.id===id); let a=parseFloat(prompt(`Deuda: ${l.amount-l.paid}. Abono:`)); if(a>0){ l.paid+=a; addToLedger(l.clientName,`Abono Préstamo`,a,true,l.clientId); saveToCloud(); renderLoans(); } }
+    function renderLoans(){ const t=document.getElementById('loansTableBody'); t.innerHTML=""; if(dataStore.loans) dataStore.loans.forEach(l=>{ if(l.paid>=l.amount)return; t.innerHTML+=`<tr><td><strong>${l.clientName}</strong><br><small>${l.desc}</small></td><td>${l.amount}</td><td style="color:red">${l.amount-l.paid}</td><td><button class="btn-sm bg-green" onclick="payLoan(${l.id})">$</button> <button class="btn-sm bg-blue" onclick="openHistory(${l.clientId},'${l.clientName}')">📜</button></td></tr>`; }); }
+    function deleteSan(id){ if(confirm("¿Eliminar?")){ dataStore.san=dataStore.san.filter(x=>x.id!==id); saveToCloud(); renderSan(); } }
+    function archiveSan(id){ const i=dataStore.san.findIndex(x=>x.id===id); if(i!==-1 && confirm("¿Archivar?")){ let item=dataStore.san[i]; item.archivedDate=new Date().toLocaleDateString(); if(!dataStore.archives)dataStore.archives=[]; dataStore.archives.push(item); dataStore.san.splice(i,1); saveToCloud(); renderSan(); renderArchives(); } }
+    function renewSan(id){ const o=dataStore.archives.find(x=>x.id===id); if(confirm("¿Renovar?")){ document.getElementById('sanClientSelect').value=o.clientId; document.getElementById('sanFreq').value=o.frequency||"Diario"; document.getElementById('sanQuota').value=o.quota; document.getElementById('sanTotal').value=o.total; document.getElementById('sanReturn').value=o.ret; showTab('san'); } }
+    
+    // --- PAGO CON FECHA MANUAL ---
+    function openPayment(id){ 
+        const p=dataStore.san.find(x=>x.id===id); 
+        const g=document.getElementById('gridContainer'); g.innerHTML=""; 
+        
+        // Limpiar input fecha cada vez que se abre
+        document.getElementById('manualDateInput').value = "";
+
+        let f=p.frequency?p.frequency.slice(0,3):"Dia"; 
+        document.getElementById('payTitle').innerText=`${p.clientName} (${f})`; 
+        
+        for(let i=1;i<=p.total;i++){ 
+            const b=document.createElement('div'); 
+            b.className='day-box'+(p.paidDays.includes(i)?' paid':''); 
+            b.innerText=i; 
+            b.onclick=()=>{ 
+                // LEER FECHA MANUAL
+                const customDate = document.getElementById('manualDateInput').value;
+
+                if(p.paidDays.includes(i)){ 
+                    if(confirm("¿Desmarcar?")){ 
+                        p.paidDays=p.paidDays.filter(d=>d!==i); 
+                        addToLedger(p.clientName,`Corrección (${f} ${i})`,p.quota,false,p.clientId, customDate); 
+                    } 
+                } else { 
+                    p.paidDays.push(i); 
+                    addToLedger(p.clientName,`Pago (${f} ${i})`,p.quota,true,p.clientId, customDate); 
+                } 
+                saveToCloud(); renderSan(); openPayment(id); 
+            }; 
+            g.appendChild(b); 
+        } 
+        document.getElementById('paymentModal').style.display='flex'; 
+    }
+
+    function openHistory(cid,n){ const t=document.getElementById('individualHistBody'); t.innerHTML=""; document.getElementById('histTitle').innerText=`Historial: ${n}`; if(dataStore.ledger) dataStore.ledger.filter(l=>l.clientId===cid).forEach(l=>t.innerHTML+=`<tr><td>${l.date}</td><td>${l.desc}</td><td style="color:${l.isIncome?'green':'red'}">${l.amount}</td></tr>`); document.getElementById('historyModal').style.display='flex'; }
+    
+    // --- GENERAR FACTURA DETALLADA V20 ---
+    function generateInvoice(id,arc=false){ 
+        let p=dataStore.san.find(x=>x.id===id); 
+        if(arc||!p)p=dataStore.archives.find(x=>x.id===id); 
+        if(!p)return; 
+        
+        // CÁLCULOS
+        const grossTotal = p.total * p.quota; // Total recaudado real
+        const netSavings = p.ret * p.quota;   // Total a devolver teórico
+        const adminProfit = grossTotal - netSavings; // Ganancia Admin
+
+        // Recuperar entrega real
+        const deliveryLog = dataStore.ledger ? dataStore.ledger.find(l => l.clientId === p.clientId && !l.isIncome && l.desc.includes('Entrega')) : null;
+        
+        let finalPayout = 0;
+        let debtDeducted = 0;
+
+        if (deliveryLog) {
+            finalPayout = deliveryLog.amount; 
+            debtDeducted = netSavings - finalPayout; 
+        } else {
+            // Simulacion
+            if(dataStore.loans) {
+                const pendingLoans = dataStore.loans.filter(l => l.clientId === p.clientId);
+                pendingLoans.forEach(l => debtDeducted += (l.amount - l.paid));
+            }
+            finalPayout = netSavings - debtDeducted;
+        }
+
+        document.getElementById('invDate').innerText=new Date().toLocaleDateString(); 
+        document.getElementById('invId').innerText=p.id.toString().slice(-6); 
+        document.getElementById('invName').innerText=p.clientName; 
+        document.getElementById('invFreq').innerText=(p.frequency||"Diario").toUpperCase(); 
+        document.getElementById('invQuota').innerText=p.quota; 
+        document.getElementById('invDays').innerText=p.total; 
+        
+        // LLENAR PIE DE PAGINA DINÁMICO
+        const footer = document.getElementById('invFooter');
+        footer.innerHTML = `
+            <tr><td colspan="2"><hr style="border:1px dashed #ccc;"></td></tr>
+            <tr>
+                <td style="text-align:right; padding-top:10px;">(+) Total Ahorrado (Bruto):</td>
+                <td style="text-align:right; padding-top:10px;">RD$ ${grossTotal.toLocaleString()}</td>
+            </tr>
+            <tr>
+                <td style="text-align:right; color:#666;">(-) Ganancia del Organizador:</td>
+                <td style="text-align:right; color:#666;">RD$ ${adminProfit.toLocaleString()}</td>
+            </tr>
+            <tr style="font-weight:bold; background:#f9f9f9;">
+                <td style="text-align:right;">= Ahorro Neto (Subtotal):</td>
+                <td style="text-align:right;">RD$ ${netSavings.toLocaleString()}</td>
+            </tr>
+            ${debtDeducted > 0 ? `
+            <tr>
+                <td style="text-align:right; color:red;">(-) Descuento Deudas/Préstamos:</td>
+                <td style="text-align:right; color:red;">RD$ ${debtDeducted.toLocaleString()}</td>
+            </tr>` : ''}
+            <tr><td colspan="2"><hr style="border:2px solid #000;"></td></tr>
+            <tr style="font-size:1.4rem; font-weight:bold;">
+                <td style="text-align:right;">TOTAL A ENTREGAR:</td>
+                <td style="text-align:right;">RD$ ${finalPayout.toLocaleString()}</td>
+            </tr>
+        `;
+
+        const b=document.getElementById('invBody'); b.innerHTML=""; 
+        const hist=dataStore.ledger ? dataStore.ledger.filter(l=>l.clientId===p.clientId && l.isIncome && (l.desc.includes('Pago') || l.desc.includes('San'))).reverse() : []; 
+        
+        if(hist.length){ hist.forEach(h=>{ b.innerHTML+=`<tr><td>${h.date}</td><td>${h.desc}</td><td style="text-align:right">${h.amount}</td></tr>`; }); } 
+        else { b.innerHTML=`<tr><td colspan="3" align="center">Resumen de pagos: ${p.paidDays.length} cuotas pagadas.</td></tr>`; } 
+        
+        document.getElementById('invoiceModal').style.display='flex'; 
+    }
+</script>
+</body>
+</html>
